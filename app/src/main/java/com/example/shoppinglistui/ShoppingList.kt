@@ -78,7 +78,29 @@ fun ShoppingList() {
             .padding(16.dp),
             content = {
                 items(sItems) {
-                    ShoppingListItems(it ,{ },{})
+                    item ->
+                    if(item.isEditable){
+                        ShoppingEditor(shoppingItem = item, onEditComplete = {
+                            editedName, editQ ->
+                            sItems = sItems.map {
+                                it.copy(isEditable = false)
+                            }
+                            val editedItem = sItems.find{it.id == item.id}
+                            editedItem?.let {
+                                it.name = editedName
+                                it.quantity = editQ
+                            }
+                        })
+                    }else{
+                        ShoppingListItems(shoppingItem = item,
+                            onEditClick = {
+                                sItems = sItems.map {
+                                    it.copy(isEditable = it.id == item.id)
+                                }
+                            }) {
+                            sItems = sItems - item
+                        }
+                    }
                 }
             })
         if (showDialog) {
@@ -134,13 +156,16 @@ fun ShoppingList() {
                                 sItems = sItems + shoppingItem
                                 showDialog = false
                                 itemName = ""
+                                itemQ = ""
                             }
 
                         }) {
 
                             Text("Add")
                         }
-                        Button(onClick = {}) {
+                        Button(onClick = {
+                            showDialog = false
+                        }) {
                             Text("Cancel")
                         }
                     }
@@ -174,7 +199,8 @@ fun ShoppingListItems(
             modifier = Modifier.padding(8.dp))
         Row(modifier = Modifier
             .padding(8.dp)
-            .fillMaxWidth()){
+            .fillMaxWidth(),
+            horizontalArrangement = Arrangement.End){
             IconButton(onClick = onEditClick) {
                 Icon(
                     Icons.Rounded.Edit,
@@ -218,15 +244,25 @@ fun ShoppingEditor(shoppingItem : ShoppingItem,
                 onValueChange = {
                 editedName = it
             } , singleLine = true,
-                modifier = Modifier.wrapContentSize().padding(8.dp))
+                modifier = Modifier
+                    .wrapContentSize()
+                    .padding(8.dp))
             BasicTextField(
                 value = editedCount,
                 onValueChange = {
                     editedCount = it
                 } , singleLine = true,
-                modifier = Modifier.wrapContentSize().padding(8.dp)
+                modifier = Modifier
+                    .wrapContentSize()
+                    .padding(8.dp)
             )
 
+        }
+        Button(onClick = {
+            isEditable = false
+            onEditComplete(editedName, editedCount.toIntOrNull() ?: 1)
+        }) {
+            Text("Save")
         }
     }
 }
